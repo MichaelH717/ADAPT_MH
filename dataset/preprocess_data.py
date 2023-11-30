@@ -14,7 +14,6 @@ import zlib
 import pickle
 from argoverse.map_representation.map_api import ArgoverseMap
 
-
 import multiprocessing
 from multiprocessing import Process
 
@@ -46,10 +45,12 @@ class Arguments:
         self.feature_size = args.feature_size
         self.max_distance = args.max_distance
 
+
 def rotate(x, y, angle):
     res_x = x * math.cos(angle) - y * math.sin(angle)
     res_y = x * math.sin(angle) + y * math.cos(angle)
     return res_x, res_y
+
 
 def get_angle(x, y):
     return math.atan2(y, x)
@@ -114,7 +115,7 @@ def get_sub_map(args, vectors=[], polyline_spans=[], mapping=None):
             pos_y = pos_matrix[t_id, agent_id, 1]
 
             bias_x, bias_y = rotate(
-                pos_x, pos_y, -1*mapping["angle"])
+                pos_x, pos_y, -1 * mapping["angle"])
             temp_x, temp_y = (bias_x + x), (bias_y + y)
             lane_ids_temp = am.get_lane_ids_in_xy_bbox(
                 temp_x, temp_y, city_name, query_search_range_manhattan=args.max_distance)
@@ -191,7 +192,7 @@ def get_labels(args, id2info, mapping):
         for agent_id in range(pos_matrix.shape[1]):
             labels[:, agent_id] = pos_matrix[pred_index:, agent_id]
             label_is_valid[:,
-                           agent_id] = information_matrix[pred_index:, agent_id]
+            agent_id] = information_matrix[pred_index:, agent_id]
             if agent_id == 0:
                 assert label_is_valid[:, agent_id].sum() == 30
 
@@ -200,7 +201,6 @@ def get_labels(args, id2info, mapping):
 
 
 def preprocess(args, id2info, mapping):
-
     polyline_spans = []
     keys = get_key_list(id2info)
     vectors = []
@@ -249,8 +249,8 @@ def position_matrix(id2info):
     # position matrix shows the time vs location of agents in the scene
     # rows are agents, columns are time steps
     # M_ij corresponds to location of agent j in time step i
-    timestamps = np.zeros((50, ))
-    pos_matrix = np.ones((50, len(id2info), 2))*np.nan
+    timestamps = np.zeros((50,))
+    pos_matrix = np.ones((50, len(id2info), 2)) * np.nan
     information_matrix = np.zeros((50, len(id2info)))
 
     keys = get_key_list(id2info)
@@ -269,7 +269,7 @@ def position_matrix(id2info):
                     information_matrix[i, agent_id] = 1
                     break
 
-    assert ((np.isnan(pos_matrix)).sum() == (information_matrix == 0).sum()*2)
+    assert ((np.isnan(pos_matrix)).sum() == (information_matrix == 0).sum() * 2)
     return pos_matrix, information_matrix, timestamps
 
 
@@ -277,8 +277,7 @@ def argoverse_get_instance(args, lines, file_name):
     global max_vector_num
     vector_num = 0
     id2info = {}
-    mapping = {}
-    mapping['file_name'] = file_name
+    mapping = {'file_name': file_name}
 
     for i, line in enumerate(lines):
 
@@ -315,11 +314,11 @@ def argoverse_get_instance(args, lines, file_name):
                 for j in range(len(span)):
                     if j + interval < len(span):
                         der_x, der_y = span[j + interval][X] - \
-                            span[j][X], span[j + interval][Y] - span[j][Y]
+                                       span[j][X], span[j + interval][Y] - span[j][Y]
                         angles.append([der_x, der_y])
 
             der_x, der_y = agent_lines[-1][X] - \
-                agent_lines[-2][X], agent_lines[-1][Y] - agent_lines[-2][Y]
+                           agent_lines[-2][X], agent_lines[-1][Y] - agent_lines[-2][Y]
 
     # Delete agents don't appear in first two seconds
     agent_keys_to_delete = []
@@ -370,37 +369,49 @@ def create_dataset(args):
     global am
     am = ArgoverseMap()
     files = []
+    if args.test:
+        ex_file_name = "test.ex_list"
+    elif args.validation:
+        ex_file_name = "eval.ex_list"
+    else:
+        ex_file_name = "ex_list"
+
+    print(ex_file_name)
+
     for each_dir in args.data_dir:
-        root, dirs, cur_files = os.walk(each_dir).__next__()
-        files.extend([os.path.join(each_dir, file) for file in cur_files if
-                      file.endswith("csv") and not file.startswith('.')])
-    print(files[:5], files[-5:])
+        for root, dirs, dir_files in os.walk(each_dir):
+            for each_file in dir_files:
+                if each_file.endswith("csv"):
+                    files.append(os.path.join(root, each_file))
 
     pbar = tqdm(total=len(files))
     queue = multiprocessing.Queue(args.core_num)
-    queue_res = multiprocessing.Queue()
 
-    def calc_ex_list(queue, queue_res, args):
-        res = []
+    def calc_ex_list(queue, args):
         while True:
             file = queue.get()
             if file is None:
                 break
             if file.endswith("csv"):
+                print(file)
                 with open(file, "r", encoding='utf-8') as fin:
                     lines = fin.readlines()[1:]
-                instance = argoverse_get_instance(
-                    args, lines, file)
-                if instance is not None:
-                    data_compress = zlib.compress(
-                        pickle.dumps(instance))
-                    res.append(data_compress)
-                    queue_res.put(data_compress)
-                else:
-                    queue_res.put(None)
+                    instance = argoverse_get_instance(
+                        args, lines, file)
+                    # Record the path of the original file in the map
+                    file_name = instance['file_name']
+                    data_compress = zlib.compress(pickle.dumps(instance))
+
+                    # Store the processed data while recording the source of the file
+                    base_file_name = os.path.basename(file_name).split('.')[0] + '.pkl'
+                    pickle_file_name = os.path.join(args.output_dir, base_file_name)
+                    pickle_file = open(pickle_file_name, 'wb')
+                    pickle.dump(data_compress, pickle_file)
+                    pickle_file.close()
 
     processes = [Process(target=calc_ex_list, args=(
-        queue, queue_res, args,)) for _ in range(args.core_num)]
+        queue, args,)) for _ in range(args.core_num)]
+
     for each in processes:
         each.start()
 
@@ -413,33 +424,11 @@ def create_dataset(args):
         pass
 
     pbar.close()
-    ex_list = []
-
-    pbar = tqdm(total=len(files))
-    for i in range(len(files)):
-        t = queue_res.get()
-        if t is not None:
-            ex_list.append(t)
-        pbar.update(1)
-    pbar.close()
 
     for i in range(args.core_num):
         queue.put(None)
     for each in processes:
         each.join()
-
-    if args.test:
-        ex_file_name = "test.ex_list"
-    elif args.validation:
-        ex_file_name = "eval.ex_list"
-    else:
-        ex_file_name = "ex_list"
-    pickle_file = open(os.path.join(
-        args.output_dir, ex_file_name), 'wb')
-    pickle.dump(ex_list, pickle_file)
-    pickle_file.close()
-    assert len(ex_list) > 0
-    print("valid data size is", len(ex_list))
 
 
 if __name__ == '__main__':
