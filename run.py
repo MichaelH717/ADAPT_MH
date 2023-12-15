@@ -11,7 +11,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 
 from utils.get_model import get_model, save_model
-from dataset.argoverse_dataset import Argoverse_Dataset, batch_list_to_batch_tensors, __iter__
+from dataset.argoverse_dataset import Argoverse_Dataset, batch_list
 from utils.utils import fix_seed, setup, save_predictions
 from utils.utils import eval_instance_argoverse, post_eval, multi_agent_metrics
 
@@ -93,14 +93,14 @@ def main(rank, args):
         train_sampler = DistributedSampler(train_dataset, num_replicas=args.world_size, rank=rank, shuffle=True, drop_last=False)
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size // args.world_size,
                                       pin_memory=False, drop_last=False, shuffle=False, sampler=train_sampler,
-                                      collate_fn=batch_list_to_batch_tensors)
+                                      collate_fn=batch_list)
 
     # if main device, load validation dataset
     if main_device:
         val_dataset = Argoverse_Dataset(args, validation=True)
         val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size // args.world_size,
                                     pin_memory=False, drop_last=False, shuffle=False,
-                                    collate_fn=batch_list_to_batch_tensors)
+                                    collate_fn=batch_list)
         
 
     iter_num = None if args.validate else len(train_dataloader)

@@ -393,7 +393,6 @@ def create_dataset(args):
             if file is None:
                 break
             if file.endswith("csv"):
-                print(file)
                 with open(file, "r", encoding='utf-8') as fin:
                     lines = fin.readlines()[1:]
                     instance = argoverse_get_instance(
