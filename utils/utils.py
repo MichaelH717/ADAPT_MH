@@ -72,7 +72,8 @@ def get_meta_info(meta_info):
     batch_size = len(meta_info)
     device = meta_info[0].device
 
-    agent_lengths = [len(scene) for scene in meta_info]
+    # agent_lengths = [len(scene) for scene in meta_info]
+    agent_lengths = [scene.shape[0] for scene in meta_info]
     max_agent_num = max(agent_lengths)
 
     meta_info_tensor = torch.zeros(

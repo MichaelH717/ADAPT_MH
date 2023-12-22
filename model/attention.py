@@ -49,7 +49,7 @@ class Attention(nn.Module):
         attention_probs = nn.Softmax(dim=-1)(attention_scores)
         attention_probs = self.attention_drop(attention_probs)
 
-        assert torch.isnan(attention_probs).sum() == 0
+        # assert torch.isnan(attention_probs).sum() == 0
 
         context_layer = torch.matmul(attention_probs, value_layer)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()

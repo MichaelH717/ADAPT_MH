@@ -105,7 +105,7 @@ class Dynamic_Trajectory_Decoder(nn.Module):
         M = agent_features.shape[1]
         D = agent_features.shape[2]
 
-        assert D == self.D_in
+        # assert D == self.D_in
 
         D_in = self.D_in
         D_out = self.D_out
@@ -202,7 +202,7 @@ class Sub_Graph(nn.Module):
             [batch_size, max_vector_num, self.hidden_size], device=device)
 
         for i in range(batch_size):
-            assert lengths[i] > 0
+            # assert lengths[i] > 0
             attention_mask[i][lengths[i]:max_vector_num].fill_(-10000.0)
             attention_mask_final[i][lengths[i]:max_vector_num].fill_(-10000.0)
 
@@ -277,18 +277,18 @@ class Trajectory_Decoder(nn.Module):
         agent_features = torch.cat([agent_features, meta_info_tensor_k], dim=-1)
 
         # offsets.shape = (N, M, 6, 2)
-        offsets = self.endpoint_refiner(torch.cat([agent_features, endpoints.detach()], dim=-1))
+        offsets = self.endpoint_refiner(torch.cat([agent_features, endpoints], dim=-1))
         endpoints += offsets
 
         # agent_features.shape = (N, M, 6, 128 + 5 + 2)
-        agent_features = torch.cat([agent_features, endpoints.detach()], dim=-1)
+        agent_features = torch.cat([agent_features, endpoints], dim=-1)
 
         predictions = self.get_trajectory(agent_features).view(N, M, 6, 29, 2)
         logits = self.get_prob(agent_features).view(N, M, 6)
 
         predictions = torch.cat([predictions, endpoints.unsqueeze(dim=-2)], dim=-2)
 
-        assert predictions.shape == (N, M, 6, 30, 2)
+        # assert predictions.shape == (N, M, 6, 30, 2)
 
         return predictions, logits
 

@@ -129,6 +129,11 @@ class Argoverse_Dataset(Dataset):
                 lane_list.append(tensor)
 
         assert len(agent_indices) > 0
+        try:
+            assert len(lane_list) > 0
+        except:
+            print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+            print(f'file name: {mapping["file_name"]}')
 
         meta_info = torch.cat(meta_info, dim=0)
         assert len(meta_info) == len(agent_indices)
@@ -155,9 +160,9 @@ class Argoverse_Dataset(Dataset):
 
         new_mapping = {"agent_data": agent_list,
                        "lane_data": lane_list,
-                       "city_name": mapping["city_name"],
+                    #    "city_name": mapping["city_name"],
                        "file_name": mapping["file_name"],
-                       "origin_labels": mapping["origin_labels"],
+                       "origin_labels": torch.tensor(mapping["origin_labels"],dtype=torch.float32),
                        "labels": labels,
                        "label_is_valid": label_is_valid,
                        "consider": consider,

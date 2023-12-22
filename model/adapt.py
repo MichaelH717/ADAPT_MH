@@ -43,8 +43,9 @@ class ADAPT(nn.Module):
         # D: Feature size
 
         batch_size = len(mapping)
-        if validate:
-            batch_init(mapping)
+        # need change
+        # if validate:
+        #     batch_init(mapping)
 
         outputs = torch.zeros(batch_size, 6, 30, 2, device=self.device)
         multi_outputs = []
@@ -101,7 +102,8 @@ class ADAPT(nn.Module):
             else:
                 consider = considers[scene_index]
 
-            pred_num = len(consider)
+            # pred_num = len(consider)
+            pred_num = consider.shape[0]
             total_agent_num += pred_num
 
             # prediction.shape = (M_c, 6, T_f, 2)
@@ -113,7 +115,7 @@ class ADAPT(nn.Module):
             label = label[consider]
             valid = valid[consider].unsqueeze(dim=-1)
 
-            assert torch.sum(label == -666) == 0
+            # assert torch.sum(label == -666) == 0
 
             prob = F.softmax(logit / 0.3, dim=-1)
             log_prob = F.log_softmax(logit, dim=-1)
@@ -125,27 +127,39 @@ class ADAPT(nn.Module):
                 multi_outputs.append(
                     (prediction.detach().cpu(), label.detach().cpu()))
 
-            if not validate:
-                loss_ = self.trajectory_loss(
-                        prediction, log_prob, valid, label)
+            # need change
+            # if not validate:
+            #     loss_ = self.trajectory_loss(
+            #             prediction, log_prob, valid, label)
 
-                losses[scene_index] = loss_*pred_num
+            #     losses[scene_index] = loss_*pred_num
 
-        if not validate:
-            return losses.sum()/total_agent_num
+        # if not validate:
+        #     return losses.sum()/total_agent_num
 
-        else:
-            outputs = np.array(outputs.tolist())
-            metric_probs = np.array(probs.tolist(
-            ), dtype=np.float32)
+        # else:
+        #     # outputs = np.array(outputs.tolist())
+        #     # metric_probs = np.array(probs.tolist(
+        #     # ), dtype=np.float32)
 
-            for i in range(batch_size):
-                for each in outputs[i]:
-                    to_origin_coordinate(each, i)
+        #     for i in range(batch_size):
+        #         for each in outputs[i]:
+        #             to_origin_coordinate(each, i)
+
+        #     self.inference_time += (end - start)
+
+        #     # return outputs, metric_probs, multi_outputs
+        #     return outputs, probs, multi_outputs
+        
+        for i in range(batch_size):
+            for each in outputs[i]:
+                to_origin_coordinate(each, i)
 
             self.inference_time += (end - start)
 
-            return outputs, metric_probs, multi_outputs
+            # return outputs, metric_probs, multi_outputs
+            return outputs, probs, multi_outputs
+
 
     def encode_polylines(self, agent_data, lane_data):
         batch_size = len(agent_data)

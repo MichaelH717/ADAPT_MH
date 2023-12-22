@@ -65,8 +65,8 @@ def get_args():
     parser = argparse.ArgumentParser("ADAPT")
 
     # === Data Related Parameters ===
-    parser.add_argument('--ex_file_path', type=str, default='/home/movex/data/argo1/dataset/output/train')
-    parser.add_argument('--val_ex_file_path', type=str, default='/home/movex/data/argo1/dataset/output/val')
+    parser.add_argument('--ex_file_path', type=str, default='/data/argo2/argo2_dataset/train_output')
+    parser.add_argument('--val_ex_file_path', type=str, default='/data/argo2/argo2_dataset/val_output')
 
     # === Test Evaluation Related Parameters ===
     parser.add_argument('--validate', action="store_true")
@@ -78,9 +78,9 @@ def get_args():
     parser.add_argument('--learning_rate', type=float, default=1e-4)
 
     # === Model Saving/Loading Parameters ===
-    parser.add_argument('--model_save_path', type=str, default='/home/movex/AI/ADAPT_MH/checkpoint/exp2')
-    parser.add_argument('--checkpoint_path', type=str, default=None)
-    parser.add_argument('--use_checkpoint', action="store_true")
+    parser.add_argument('--model_save_path', type=str, default='/home/movex/AI/ADAPT_MH/checkpoint/argo2_exp1')
+    parser.add_argument('--checkpoint_path', type=str, default='/home/movex/AI/ADAPT_MH/checkpoint/exp3/checkpoint.pt')
+    parser.add_argument('--use_checkpoint', action="store_true", default=False)
 
     # === Misc Training Parameters ===
     parser.add_argument('--seed', type=int, default=0)

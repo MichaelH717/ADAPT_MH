@@ -111,6 +111,8 @@ def main(rank, args):
         model_parameters = filter(lambda p: p.requires_grad, model.module.parameters())
         params = sum([np.prod(p.size()) for p in model_parameters])
         print(f"\nParameter Number: {params / 1e6:.2f}M\n")
+        print(f'start_epoch = {start_epoch}')
+        start_epoch = 0
 
 
     # validation
